@@ -45,8 +45,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
     <div className="flex items-center justify-center h-screen bg-gray-900">
       <div className="w-full max-w-sm p-8 space-y-8 bg-gray-800 rounded-2xl shadow-2xl">
         <div className="text-center">
-            <h1 className="text-3xl font-bold text-white">شات جماعي</h1>
-            <p className="mt-2 text-gray-400">انضم إلى المحادثة</p>
+          <div className="mx-auto w-20 h-20 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-4xl">💬</div>
+          <h1 className="text-3xl font-bold text-white mt-4">شات جماعي</h1>
+          <p className="mt-2 text-gray-400">انضم إلى المحادثة</p>
         </div>
         {!isSupabaseConfigured && (
           <div className="p-4 text-sm text-yellow-200 bg-yellow-900/50 rounded-lg text-center">
@@ -57,15 +58,15 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
         <div className="space-y-6">
           <div>
             <label htmlFor="username" className="text-sm font-medium text-gray-300 block text-right">
-              اسم المستخدم
+              البريد الإلكتروني
             </label>
             <input
               id="username"
-              type="text"
+              type="email"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="mt-1 block w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-right"
-              placeholder="ادخل اسم المستخدم"
+              className="mt-1 block w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition text-right"
+              placeholder="ادخل بريدك الإلكتروني"
               required
               disabled={isLoading}
             />
@@ -86,18 +87,18 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
           </div>
           {error && <p className="text-sm text-red-400 text-center">{error}</p>}
           {successMessage && <p className="text-sm text-green-400 text-center">{successMessage}</p>}
-          <div className="flex flex-col space-y-4">
+          <div className="flex flex-col space-y-3">
              <button
                 onClick={() => handleAuthAction('login')}
                 disabled={!username || !password || isLoading}
-                className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 rounded-md text-white font-semibold text-center transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 disabled:bg-gray-600 disabled:hover:scale-100 disabled:cursor-not-allowed"
+                className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 rounded-md text-white font-semibold text-center transition duration-200 transform hover:scale-102 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-indigo-500 disabled:bg-gray-600 disabled:cursor-not-allowed"
               >
                 {isLoading ? 'جارِ الدخول...' : 'دخول'}
               </button>
               <button
                 onClick={() => handleAuthAction('register')}
                 disabled={!username || !password || isLoading}
-                className="w-full py-3 px-4 bg-green-600 hover:bg-green-700 rounded-md text-white font-semibold text-center transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-green-500 disabled:bg-gray-600 disabled:hover:scale-100 disabled:cursor-not-allowed"
+                className="w-full py-3 px-4 bg-gray-700 hover:bg-gray-600 rounded-md text-white font-semibold text-center transition duration-200"
               >
                 {isLoading ? 'جارِ الإنشاء...' : 'إنشاء حساب'}
               </button>
