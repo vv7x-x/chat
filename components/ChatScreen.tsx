@@ -48,7 +48,10 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ user, onLogout }) => {
   return (
     <div className="flex flex-col h-screen bg-gray-900">
       <header className="bg-gray-800 shadow-md p-4 flex justify-between items-center z-10">
-        <h1 className="text-xl font-bold text-white">شات عام</h1>
+        <div className="text-right">
+          <h1 className="text-xl font-bold text-white">شات عام</h1>
+          <p className="text-xs text-gray-400">ملاحظة: الرسائل محفوظة على هذا الجهاز فقط</p>
+        </div>
         <button
           onClick={onLogout}
           className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition duration-300"
@@ -80,7 +83,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ user, onLogout }) => {
                   }`}
                 >
                   {!isCurrentUser && (
-                    <p className="text-sm font-semibold text-indigo-300 mb-1">{message.sender.name}</p>
+                    <p className="text-sm font-semibold text-indigo-300 mb-1 text-right">{message.sender.name}</p>
                   )}
                   <p className="text-base break-words">{message.text}</p>
                 </div>
