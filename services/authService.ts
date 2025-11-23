@@ -36,8 +36,9 @@ export const register = async (username: string, password: string): Promise<{ su
     return { success: true, message: 'تم إنشاء الحساب بنجاح!', user: data as User };
 
   } catch (error: any) {
-    console.error("Registration error:", error);
-    return { success: false, message: error.message || 'حدث خطأ أثناء إنشاء الحساب.' };
+    console.error("Registration error:", error.message || error);
+    const message = (error && error.message) ? error.message : 'حدث خطأ أثناء إنشاء الحساب.';
+    return { success: false, message };
   }
 };
 
@@ -68,7 +69,8 @@ export const login = async (username: string, password: string): Promise<{ succe
         return { success: false, message: 'اسم المستخدم أو كلمة المرور غير صحيحة' };
 
     } catch (error: any) {
-        console.error("Login error:", error);
-        return { success: false, message: error.message || 'حدث خطأ أثناء تسجيل الدخول.' };
+        console.error("Login error:", error.message || error);
+        const message = (error && error.message) ? error.message : 'حدث خطأ أثناء تسجيل الدخول.';
+        return { success: false, message };
     }
 };

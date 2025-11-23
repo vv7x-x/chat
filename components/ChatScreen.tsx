@@ -88,9 +88,10 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ user, onLogout }) => {
 
     try {
       await sendMessage(user, trimmedInput);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to send message:", error);
-      setSendError("فشل إرسال الرسالة. الرجاء المحاولة مرة أخرى.");
+      const errorMessage = (error && error.message) ? error.message : "فشل إرسال الرسالة. الرجاء المحاولة مرة أخرى.";
+      setSendError(errorMessage);
       setInputText(originalText); // Restore input on failure
     }
   };

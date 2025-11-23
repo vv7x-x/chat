@@ -40,7 +40,7 @@ export const sendMessage = async (sender: User, text: string): Promise<void> => 
     });
   
   if (error) {
-      console.error("Error sending message:", error);
+      console.error("Error sending message:", error.message || error);
       throw error;
   }
 };

@@ -89,14 +89,14 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
           <div className="flex flex-col space-y-4">
              <button
                 onClick={() => handleAuthAction('login')}
-                disabled={isLoading}
+                disabled={!username || !password || isLoading}
                 className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 rounded-md text-white font-semibold text-center transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 disabled:bg-gray-600 disabled:hover:scale-100 disabled:cursor-not-allowed"
               >
                 {isLoading ? 'جارِ الدخول...' : 'دخول'}
               </button>
               <button
                 onClick={() => handleAuthAction('register')}
-                disabled={isLoading}
+                disabled={!username || !password || isLoading}
                 className="w-full py-3 px-4 bg-green-600 hover:bg-green-700 rounded-md text-white font-semibold text-center transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-green-500 disabled:bg-gray-600 disabled:hover:scale-100 disabled:cursor-not-allowed"
               >
                 {isLoading ? 'جارِ الإنشاء...' : 'إنشاء حساب'}
