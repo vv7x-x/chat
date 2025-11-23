@@ -38,6 +38,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ user, onLogout }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [sendError, setSendError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -81,10 +82,19 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ user, onLogout }) => {
     const trimmedInput = inputText.trim();
     if (!trimmedInput) return;
 
-    setInputText('');
-    await sendMessage(user, trimmedInput);
-    scrollToBottom(); // Scroll immediately for better UX
+    setSendError(null); // Clear previous error
+    const originalText = inputText;
+    setInputText(''); // Optimistically clear the input
+
+    try {
+      await sendMessage(user, trimmedInput);
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      setSendError("فشل إرسال الرسالة. الرجاء المحاولة مرة أخرى.");
+      setInputText(originalText); // Restore input on failure
+    }
   };
+
 
   if (!isSupabaseConfigured) {
       return <SupabaseNotice onLogout={onLogout} />;
@@ -154,6 +164,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ user, onLogout }) => {
       </main>
 
       <footer className="bg-gray-800 p-4 sticky bottom-0">
+        {sendError && <p className="text-red-400 text-center text-sm pb-2">{sendError}</p>}
         <div className="flex items-center space-x-4 flex-row-reverse">
           <input
             type="text"
