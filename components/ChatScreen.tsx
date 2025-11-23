@@ -1,30 +1,71 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { User, Message } from '../types';
-import { getMessages, sendMessage } from '../services/chatService';
+import { getMessages, sendMessage, subscribeToMessages } from '../services/chatService';
+import { isSupabaseConfigured, supabase } from '../services/supabaseClient';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
+// FIX: Defined ChatScreenProps interface for the component's props.
 interface ChatScreenProps {
   user: User;
   onLogout: () => void;
 }
 
+const SupabaseNotice: React.FC<{onLogout: () => void}> = ({ onLogout }) => (
+    <div className="flex flex-col h-screen bg-gray-900 text-white items-center justify-center text-center p-4">
+        <div className="w-full max-w-2xl p-8 bg-gray-800 rounded-2xl shadow-2xl">
+            <h1 className="text-3xl font-bold text-yellow-300 mb-4">الإعداد مطلوب لتفعيل الدردشة</h1>
+            <p className="mb-6 text-gray-300">
+                هذا التطبيق يستخدم خدمة Supabase لتمكين الدردشة الفورية عبر الأجهزة. يرجى اتباع الخطوات التالية لإعداده:
+            </p>
+            <ol className="text-left space-y-4 text-gray-200 list-decimal list-inside mb-8">
+                <li>اذهب إلى <a href="https://supabase.com" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">supabase.com</a> وأنشئ حسابًا ومشروعًا جديدًا (الخطة المجانية كافية).</li>
+                <li>من إعدادات المشروع (Project Settings &gt; API)، انسخ <strong>Project URL</strong> ومفتاح <strong>anon public</strong>.</li>
+                <li>افتح ملف <code className="bg-gray-700 px-2 py-1 rounded-md text-sm">config.ts</code> في مشروعك والصق القيم المنسوخة.</li>
+                <li>من محرر SQL في Supabase، قم بتنفيذ السكريبت لإنشاء الجداول اللازمة (راجع التعليمات).</li>
+            </ol>
+            <button
+                onClick={onLogout}
+                className="px-6 py-3 bg-red-600 hover:bg-red-700 font-semibold rounded-lg transition duration-300"
+            >
+                العودة إلى تسجيل الدخول
+            </button>
+        </div>
+    </div>
+);
+
+
 const ChatScreen: React.FC<ChatScreenProps> = ({ user, onLogout }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setMessages(getMessages());
-
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'chat_messages' && event.newValue) {
-        setMessages(JSON.parse(event.newValue));
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
+    if (!isSupabaseConfigured) {
+        setIsLoading(false);
+        return;
+    }
     
+    const fetchMessages = async () => {
+        try {
+            const initialMessages = await getMessages();
+            setMessages(initialMessages);
+        } catch (error) {
+            console.error("Failed to fetch messages:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    fetchMessages();
+
+    const channel = subscribeToMessages((newMessage) => {
+        setMessages((prevMessages) => [...prevMessages, newMessage]);
+    });
+
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
+        if (supabase && channel) {
+            supabase.removeChannel(channel as RealtimeChannel);
+        }
     };
   }, []);
 
@@ -36,21 +77,25 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ user, onLogout }) => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     const trimmedInput = inputText.trim();
     if (!trimmedInput) return;
 
-    sendMessage(user, trimmedInput);
-    setMessages(getMessages());
     setInputText('');
+    await sendMessage(user, trimmedInput);
+    scrollToBottom(); // Scroll immediately for better UX
   };
+
+  if (!isSupabaseConfigured) {
+      return <SupabaseNotice onLogout={onLogout} />;
+  }
 
   return (
     <div className="flex flex-col h-screen bg-gray-900">
       <header className="bg-gray-800 shadow-md p-4 flex justify-between items-center z-10">
         <div className="text-right">
           <h1 className="text-xl font-bold text-white">شات عام</h1>
-          <p className="text-xs text-gray-400">ملاحظة: الرسائل محفوظة على هذا الجهاز فقط</p>
+          <p className="text-xs text-gray-400">مرحباً بك، {user.name}!</p>
         </div>
         <button
           onClick={onLogout}
@@ -61,40 +106,50 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ user, onLogout }) => {
       </header>
 
       <main className="flex-grow overflow-y-auto p-4 md:p-6 space-y-6">
-        {messages.map((message) => {
-            const isCurrentUser = message.sender.id === user.id;
-            return (
-              <div
-                key={message.id}
-                className={`flex items-end gap-3 ${
-                  isCurrentUser ? 'justify-end' : 'justify-start'
-                }`}
-              >
-                {!isCurrentUser && (
-                    <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center font-bold text-sm flex-shrink-0" title={message.sender.name}>
-                        {message.sender.name.charAt(0).toUpperCase()}
+        {isLoading ? (
+            <div className="flex justify-center items-center h-full">
+                <p className="text-gray-400">جارِ تحميل الرسائل...</p>
+            </div>
+        ) : messages.length === 0 ? (
+            <div className="flex justify-center items-center h-full">
+                <p className="text-gray-400">لا توجد رسائل بعد. كن أول من يبدأ المحادثة!</p>
+            </div>
+        ) : (
+            messages.map((message) => {
+                const isCurrentUser = message.sender.id === user.id;
+                return (
+                  <div
+                    key={message.id}
+                    className={`flex items-end gap-3 ${
+                      isCurrentUser ? 'justify-end' : 'justify-start'
+                    }`}
+                  >
+                    {!isCurrentUser && (
+                        <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center font-bold text-sm flex-shrink-0" title={message.sender.name}>
+                            {message.sender.name.charAt(0).toUpperCase()}
+                        </div>
+                    )}
+                    <div
+                      className={`max-w-xs md:max-w-md lg:max-w-2xl px-4 py-3 rounded-2xl ${
+                        isCurrentUser
+                          ? 'bg-blue-600 text-white rounded-bl-none'
+                          : 'bg-gray-700 text-gray-200 rounded-br-none'
+                      }`}
+                    >
+                      {!isCurrentUser && (
+                        <p className="text-sm font-semibold text-indigo-300 mb-1 text-right">{message.sender.name}</p>
+                      )}
+                      <p className="text-base break-words">{message.text}</p>
                     </div>
-                )}
-                <div
-                  className={`max-w-xs md:max-w-md lg:max-w-2xl px-4 py-3 rounded-2xl ${
-                    isCurrentUser
-                      ? 'bg-blue-600 text-white rounded-bl-none'
-                      : 'bg-gray-700 text-gray-200 rounded-br-none'
-                  }`}
-                >
-                  {!isCurrentUser && (
-                    <p className="text-sm font-semibold text-indigo-300 mb-1 text-right">{message.sender.name}</p>
-                  )}
-                  <p className="text-base break-words">{message.text}</p>
-                </div>
-                {isCurrentUser && (
-                    <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-sm flex-shrink-0" title={user.name}>
-                        {user.name.charAt(0).toUpperCase()}
-                    </div>
-                )}
-              </div>
-            )
-        })}
+                    {isCurrentUser && (
+                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-sm flex-shrink-0" title={user.name}>
+                            {user.name.charAt(0).toUpperCase()}
+                        </div>
+                    )}
+                  </div>
+                )
+            })
+        )}
         <div ref={messagesEndRef} />
       </main>
 
