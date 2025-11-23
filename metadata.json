@@ -1,0 +1,5 @@
+{
+  "name": "Arabic Group Chat",
+  "description": "A simple group chat application where users can register, log in, and send messages to each other. Chat data is stored locally in the browser.",
+  "requestFramePermissions": []
+}
